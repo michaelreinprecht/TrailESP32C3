@@ -45,7 +45,7 @@ void wifi_init_static_ip(void)
     assert(netif);
 
     esp_netif_ip_info_t ip_info;
-    IP4_ADDR(&ip_info.ip, 192, 168, 4, 9);        // ESP Address
+    IP4_ADDR(&ip_info.ip, 192, 168, 4, 100);      // ESP Address
     IP4_ADDR(&ip_info.gw, 192, 168, 4, 1);        // Gateway (Raspi) address
     IP4_ADDR(&ip_info.netmask, 255, 255, 255, 0); // Netmask
 
