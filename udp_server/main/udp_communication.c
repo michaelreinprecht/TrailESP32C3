@@ -14,6 +14,52 @@
 
 static const char *TAG = "udp_echo_server";
 
+// Function to send an acknowledgment response to the sender
+void send_ack(int sock, struct sockaddr_storage *source_addr, uint8_t version_number)
+{
+    header_t ack_header;
+    ack_header.version_number = version_number; // Use the same version number as the incoming packet
+    ack_header.message_type = ACK;              // Set message type to ACK
+    ack_header.flags = NACK_FLAG;               // No ACK needed when sending an ACK
+    ack_header.length = 0;                      // No payload for ACK
+
+    // Send the ACK header back to the sender
+    int err = sendto(sock, &ack_header, sizeof(header_t), 0, (struct sockaddr *)source_addr, sizeof(*source_addr));
+    if (err < 0)
+    {
+        ESP_LOGE(TAG, "Error occurred during sending ACK: errno %d", errno);
+    }
+}
+
+// Function to echo back the message to the sender
+void echo_message(int sock, struct sockaddr_storage *source_addr, header_t *header, uint8_t *payload, int payload_len)
+{
+    // Allocate a buffer for the response that includes both the header and the payload
+    uint8_t *response_buffer = (uint8_t *)malloc(sizeof(header_t) + payload_len);
+    if (response_buffer)
+    {
+        // Copy the header and payload into the response buffer
+        memcpy(response_buffer, header, sizeof(header_t));
+        if (payload && payload_len > 0)
+        {
+            memcpy(response_buffer + sizeof(header_t), payload, payload_len);
+        }
+
+        // Send the response back to the sender
+        int err = sendto(sock, response_buffer, sizeof(header_t) + payload_len, 0, (struct sockaddr *)source_addr, sizeof(*source_addr));
+        if (err < 0)
+        {
+            ESP_LOGE(TAG, "Error occurred during sending: errno %d", errno);
+        }
+
+        free(response_buffer); // Free the response buffer memory
+    }
+    else
+    {
+        ESP_LOGE(TAG, "Failed to allocate memory for response buffer");
+    }
+}
+
 // UDP server task function
 void udp_echo_server_task(void *pvParameters)
 {
@@ -56,65 +102,117 @@ void udp_echo_server_task(void *pvParameters)
         struct sockaddr_storage source_addr; // stored the senders address
         socklen_t socklen = sizeof(source_addr);
 
-        uint8_t buffer[sizeof(location_data_t) + 1]; // Buffer for the largest struct -> TODO method for getting largest struct ...
+        uint8_t header_buffer[sizeof(header_t)];
 
         while (1)
         {
             ESP_LOGI(TAG, "Waiting for data");
-            // Attempt to receive packets and handle errors in receiving
-            int len = recvfrom(sock, buffer, sizeof(buffer), 0, (struct sockaddr *)&source_addr, &socklen);
-            if (len < 0)
+            // Receive header
+            int header_len = recvfrom(sock, header_buffer, sizeof(header_buffer), 0, (struct sockaddr *)&source_addr, &socklen);
+            if (header_len < 0)
             {
-                // On failure to receive data, log error and break loop
-                ESP_LOGE(TAG, "recvfrom failed: errno %d", errno);
+                ESP_LOGE(TAG, "Failed to receive header: errno %d", errno);
                 break;
             }
-            else // Received data
+
+            if (header_len == sizeof(header_t))
             {
-                // Log the size of the incoming data
-                ESP_LOGI(TAG, "Received %d bytes", len);
+                // Parse the header
+                header_t received_header;
+                memcpy(&received_header, header_buffer, sizeof(header_t));
 
-                // Determine the type of struct
-                struct_types_t struct_type = (struct_types_t)buffer[0]; // First byte indicates the type
+                ESP_LOGI(TAG, "Received header: Version = %d, Message Type = %d, Flags = %d, Length = %d",
+                         received_header.version_number, received_header.message_type, received_header.flags, received_header.length);
 
-                if (struct_type == command)
+                // If an ack flag is set, send an acknowledgment response, but never send an ack for an ack
+                if (received_header.flags == ACK_FLAG && received_header.message_type != ACK)
                 {
-                    command_t cmd_buffer;
-                    memcpy(&cmd_buffer, &buffer[1], sizeof(command_t)); // Copy data into cmd_buffer
-
-                    // Log received values
-                    inet_ntoa_r(((struct sockaddr_in *)&source_addr)->sin_addr, addr_str, sizeof(addr_str) - 1); // Convert IP address to string
-                    ESP_LOGI(TAG, "Received command from %s: Direction = %c, Speed = %ld, Stop = %d",
-                             addr_str, cmd_buffer.direction, cmd_buffer.speed, cmd_buffer.stop);
-
-                    // Echo the command back
-                    int err = sendto(sock, buffer, sizeof(command_t) + 1, 0, (struct sockaddr *)&source_addr, sizeof(source_addr));
-                    if (err < 0)
-                    {
-                        ESP_LOGE(TAG, "Error occurred during sending: errno %d", errno);
-                    }
+                    ESP_LOGI(TAG, "ACK flag set, sending acknowledgment response");
+                    send_ack(sock, &source_addr, received_header.version_number);
                 }
-                else if (struct_type == location_data)
+
+                if (received_header.message_type != ERR)
                 {
-                    location_data_t loc_data_buffer;
-                    memcpy(&loc_data_buffer, &buffer[1], sizeof(location_data_t)); // Copy data into loc_data_buffer
+                    // Receive Payload based on message type
+                    if (received_header.message_type != ACK)
+                    { // ack has no payload!
+                        // Allocate a buffer for the payload based on the length specified in the header
+                        uint8_t *payload_buffer = (uint8_t *)malloc(received_header.length);
+                        if (payload_buffer == NULL)
+                        {
+                            ESP_LOGE(TAG, "Failed to allocate memory for payload");
+                            continue;
+                        }
 
-                    // Log received values
-                    inet_ntoa_r(((struct sockaddr_in *)&source_addr)->sin_addr, addr_str, sizeof(addr_str) - 1); // Convert IP address to string
-                    ESP_LOGI(TAG, "Received location data from %s: X = %ld, Y = %ld",
-                             addr_str, loc_data_buffer.x, loc_data_buffer.y);
+                        // Receive payload
+                        int payload_len = recvfrom(sock, payload_buffer, received_header.length, 0, (struct sockaddr *)&source_addr, &socklen);
+                        if (payload_len < 0)
+                        {
+                            ESP_LOGE(TAG, "Failed to receive payload: errno %d", errno);
+                            free(payload_buffer);
+                            break;
+                        }
 
-                    // Echo the location data back
-                    int err = sendto(sock, buffer, sizeof(location_data_t) + 1, 0, (struct sockaddr *)&source_addr, sizeof(source_addr));
-                    if (err < 0)
-                    {
-                        ESP_LOGE(TAG, "Error occurred during sending: errno %d", errno);
+                        // Handle payload based on message type
+                        switch (received_header.message_type)
+                        {
+                        case CONTROL_COMMAND:
+                        {
+                            if (payload_len == sizeof(control_command_t))
+                            {
+                                control_command_t cmd_buffer;
+                                memcpy(&cmd_buffer, payload_buffer, sizeof(control_command_t));
+
+                                // Log the received command
+                                inet_ntoa_r(((struct sockaddr_in *)&source_addr)->sin_addr, addr_str, sizeof(addr_str) - 1);
+                                ESP_LOGI(TAG, "Received control command from %s: Direction = %c, Speed = %ld, Stop = %d",
+                                         addr_str, cmd_buffer.direction, cmd_buffer.speed, cmd_buffer.stop);
+
+                                // Echo the command back to the sender
+                                echo_message(sock, &source_addr, &received_header, payload_buffer, payload_len);
+                            }
+                            break;
+                        }
+                        case MOVE_TO_COMMAND:
+                        {
+                            if (payload_len == sizeof(move_to_command_t))
+                            {
+                                move_to_command_t move_buffer;
+                                memcpy(&move_buffer, payload_buffer, sizeof(move_to_command_t));
+
+                                // Log the received move to command
+                                inet_ntoa_r(((struct sockaddr_in *)&source_addr)->sin_addr, addr_str, sizeof(addr_str) - 1);
+                                ESP_LOGI(TAG, "Received move to command from %s: X = %ld, Y = %ld",
+                                         addr_str, move_buffer.x, move_buffer.y);
+
+                                // Echo the move to command back to the sender
+                                echo_message(sock, &source_addr, &received_header, payload_buffer, payload_len);
+                            }
+                            break;
+                        }
+                        default:
+                            ESP_LOGE(TAG, "Unknown message type or damaged datagram received");
+                            break;
+                        }
+
+                        // Free the allocated memory for the payload
+                        free(payload_buffer);
+                    }
+                    else
+                    { // TODO: Handle ACK ...
+                        ESP_LOGI(TAG, "Received ACK");
                     }
                 }
                 else
                 {
-                    ESP_LOGE(TAG, "Unknown struct type or damaged datagram received");
+                    // TODO: Handle ERR ...
+                    ESP_LOGE(TAG, "Received error message");
                 }
+            }
+            else
+            {
+                ESP_LOGE(TAG, "Received header of incorrect size: %d", header_len);
+                break;
             }
         }
 

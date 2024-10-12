@@ -4,23 +4,39 @@
 
 #include <stdint.h>
 
-typedef enum
+typedef enum message_type
 {
-    command = 1,
-    location_data = 2,
-} struct_types_t;
+    ERR = 0,
+    ACK = 1,
+    CONTROL_COMMAND = 2,
+    MOVE_TO_COMMAND = 3,
+} message_type_t;
 
-typedef struct __attribute__((packed)) // ensure 1-byte alignment for struct (same in C#)
+typedef enum message_flags
 {
-    int8_t direction; // matches the C# byte -> displays a character
-    int32_t speed;    // matches the C# int
-    int8_t stop;      // matches the C# byte -> is 0 or 1 (bool)
-} command_t;
+    ACK_FLAG = 0,
+    NACK_FLAG = 1,
+} message_flags_t;
+
+typedef struct __attribute__((packed))
+{
+    int8_t version_number; // 1 byte defining version number of the protocol
+    int8_t message_type;   // 1 byte defining message type (e.g. ERR=0, ACK=1, Control_Command=2, MoveTo_Command=3, ...)
+    int8_t flags;          // 1 byte for different flags (e.g. ACK=0, NACK=1, ...)
+    int8_t length;         // 1 byte specifying the length of the payload in bytes
+} header_t;
+
+typedef struct __attribute__((packed))
+{
+    int8_t direction;
+    int32_t speed;
+    int8_t stop;
+} control_command_t;
 
 typedef struct __attribute__((packed))
 {
     int32_t x;
     int32_t y;
-} location_data_t;
+} move_to_command_t;
 
 #endif // DATA_STRUCTURES_H
