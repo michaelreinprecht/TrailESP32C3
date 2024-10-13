@@ -4,7 +4,7 @@
 
 #include <stdint.h>
 
-typedef enum message_type
+typedef enum
 {
     ERR = 0,
     ACK = 1,
@@ -12,7 +12,7 @@ typedef enum message_type
     MOVE_TO_COMMAND = 3,
 } message_type_t;
 
-typedef enum message_flags
+typedef enum
 {
     ACK_FLAG = 0,
     NACK_FLAG = 1,
