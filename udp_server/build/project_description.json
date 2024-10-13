@@ -1,7 +1,7 @@
 {
     "version":            "1.1",
     "project_name":       "udp_server",
-    "project_version":    "76248eb-dirty",
+    "project_version":    "aa544aa-dirty",
     "project_path":       "C:/Users/Zechs/Documents/FHV/5. Semester/Microprocessors/ESP32C3/udp_server",
     "idf_path":           "C:/Users/Zechs/esp/v5.3.1/esp-idf",
     "build_dir":          "C:/Users/Zechs/Documents/FHV/5. Semester/Microprocessors/ESP32C3/udp_server/build",

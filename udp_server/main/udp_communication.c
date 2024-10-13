@@ -165,36 +165,30 @@ void udp_echo_server_task(void *pvParameters)
             }
             case CONTROL_COMMAND:
             {
-                if (received_header.length == sizeof(control_command_t))
-                {
-                    control_command_t cmd_buffer;
-                    memcpy(&cmd_buffer, packet_buffer + sizeof(header_t), sizeof(control_command_t));
+                control_command_t cmd_buffer;
+                memcpy(&cmd_buffer, packet_buffer + sizeof(header_t), sizeof(control_command_t));
 
-                    // Log the received command
-                    inet_ntoa_r(((struct sockaddr_in *)&source_addr)->sin_addr, addr_str, sizeof(addr_str) - 1);
-                    ESP_LOGI(TAG, "Received control command from %s: Direction = %c, Speed = %ld, Stop = %d",
-                             addr_str, cmd_buffer.direction, cmd_buffer.speed, cmd_buffer.stop);
+                // Log the received command
+                inet_ntoa_r(((struct sockaddr_in *)&source_addr)->sin_addr, addr_str, sizeof(addr_str) - 1);
+                ESP_LOGI(TAG, "Received control command from %s: Direction = %c, Speed = %ld, Stop = %d",
+                         addr_str, cmd_buffer.direction, cmd_buffer.speed, cmd_buffer.stop);
 
-                    // Echo the command back to the sender
-                    // echo_message(sock, &source_addr, &received_header, packet_buffer + sizeof(header_t), received_header.length);
-                }
+                // Echo the command back to the sender
+                // echo_message(sock, &source_addr, &received_header, packet_buffer + sizeof(header_t), received_header.length);
                 break;
             }
             case MOVE_TO_COMMAND:
             {
-                if (received_header.length == sizeof(move_to_command_t))
-                {
-                    move_to_command_t move_buffer;
-                    memcpy(&move_buffer, packet_buffer + sizeof(header_t), sizeof(move_to_command_t));
+                move_to_command_t move_buffer;
+                memcpy(&move_buffer, packet_buffer + sizeof(header_t), sizeof(move_to_command_t));
 
-                    // Log the received move to command
-                    inet_ntoa_r(((struct sockaddr_in *)&source_addr)->sin_addr, addr_str, sizeof(addr_str) - 1);
-                    ESP_LOGI(TAG, "Received move to command from %s: X = %ld, Y = %ld",
-                             addr_str, move_buffer.x, move_buffer.y);
+                // Log the received move to command
+                inet_ntoa_r(((struct sockaddr_in *)&source_addr)->sin_addr, addr_str, sizeof(addr_str) - 1);
+                ESP_LOGI(TAG, "Received move to command from %s: X = %ld, Y = %ld",
+                         addr_str, move_buffer.x, move_buffer.y);
 
-                    // Echo the move to command back to the sender
-                    // echo_message(sock, &source_addr, &received_header, packet_buffer + sizeof(header_t), received_header.length);
-                }
+                // Echo the move to command back to the sender
+                // echo_message(sock, &source_addr, &received_header, packet_buffer + sizeof(header_t), received_header.length);
                 break;
             }
             default:

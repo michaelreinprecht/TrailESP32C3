@@ -18,7 +18,7 @@ typedef enum
     NACK_FLAG = 1,
 } message_flags_t;
 
-typedef struct __attribute__((packed))
+typedef struct
 {
     int8_t version_number; // 1 byte defining version number of the protocol
     int8_t message_type;   // 1 byte defining message type (e.g. ERR=0, ACK=1, Control_Command=2, MoveTo_Command=3, ...)
@@ -26,14 +26,14 @@ typedef struct __attribute__((packed))
     int8_t length;         // 1 byte specifying the length of the payload in bytes
 } header_t;
 
-typedef struct __attribute__((packed))
+typedef struct
 {
-    int8_t direction;
     int32_t speed;
+    int8_t direction;
     int8_t stop;
 } control_command_t;
 
-typedef struct __attribute__((packed))
+typedef struct
 {
     int32_t x;
     int32_t y;
