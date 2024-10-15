@@ -18,7 +18,7 @@
 
 // Remove include for datastrucutures ....
 // Move this method somewhere else ....?
-void udp_echo_server_task(void *pvParameters)
+void udp_server_task(void *pvParameters)
 {
     uint8_t packet_buffer[1024];
     struct sockaddr_storage source_addr;
@@ -53,5 +53,5 @@ void app_main(void)
 
     wifi_init_static_ip(); // Connect to the Raspberry PI's Wi-Fi
 
-    xTaskCreate(udp_echo_server_task, "udp_server", 4096, NULL, 5, NULL);
+    xTaskCreate(udp_server_task, "udp_server", 4096, NULL, 5, NULL);
 }
