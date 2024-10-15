@@ -1,7 +1,7 @@
 {
     "version":            "1.1",
     "project_name":       "udp_server",
-    "project_version":    "791d056-dirty",
+    "project_version":    "67f805b-dirty",
     "project_path":       "C:/Users/Zechs/Documents/FHV/5. Semester/Microprocessors/ESP32C3/udp_server",
     "idf_path":           "C:/Users/Zechs/esp/v5.3.1/esp-idf",
     "build_dir":          "C:/Users/Zechs/Documents/FHV/5. Semester/Microprocessors/ESP32C3/udp_server/build",
@@ -1180,7 +1180,7 @@
             "managed_reqs": [],
             "managed_priv_reqs": [ "protocol_examples_common" ],
             "file": "C:/Users/Zechs/Documents/FHV/5. Semester/Microprocessors/ESP32C3/udp_server/build/esp-idf/main/libmain.a",
-            "sources": [ "C:/Users/Zechs/Documents/FHV/5. Semester/Microprocessors/ESP32C3/udp_server/main/udp_communication.c", "C:/Users/Zechs/Documents/FHV/5. Semester/Microprocessors/ESP32C3/udp_server/main/main.c", "C:/Users/Zechs/Documents/FHV/5. Semester/Microprocessors/ESP32C3/udp_server/main/wifi_handler.c" ],
+            "sources": [ "C:/Users/Zechs/Documents/FHV/5. Semester/Microprocessors/ESP32C3/udp_server/main/app_protocol.c", "C:/Users/Zechs/Documents/FHV/5. Semester/Microprocessors/ESP32C3/udp_server/main/udp_communication.c", "C:/Users/Zechs/Documents/FHV/5. Semester/Microprocessors/ESP32C3/udp_server/main/main.c", "C:/Users/Zechs/Documents/FHV/5. Semester/Microprocessors/ESP32C3/udp_server/main/wifi_handler.c" ],
             "include_dirs": [ "." ]
         },
         "mbedtls": {
