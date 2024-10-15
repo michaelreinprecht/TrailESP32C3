@@ -1,2 +1,4 @@
 udp_server/build
+udp_server/.vscode/settings.json
 car_steering/build
+car_steering/.vscode/settings.json
