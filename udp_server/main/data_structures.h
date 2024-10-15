@@ -22,8 +22,9 @@ typedef struct
 {
     int8_t version_number; // 1 byte defining version number of the protocol
     int8_t message_type;   // 1 byte defining message type (e.g. ERR=0, ACK=1, Control_Command=2, MoveTo_Command=3, ...)
-    int8_t flags;          // 1 byte for different flags (e.g. ACK=0, NACK=1, ...)
-    int8_t length;         // 1 byte specifying the length of the payload in bytes
+    int8_t flags;          // 1 byte for different flags (e.g. ACK=0, NACK=1, ...) TODO: replace with bitfield
+    //+ Sequenznummer
+    int8_t length; // 1 byte specifying the length of the payload in bytes
 } header_t;
 
 typedef struct

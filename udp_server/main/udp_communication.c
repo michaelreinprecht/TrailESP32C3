@@ -14,6 +14,12 @@
 
 static const char *TAG = "udp_echo_server";
 
+/*
+UDP: Kontrolliert Socket und schickt Packete. Erhält nur z.B. Adresse und Byte pointer zum versenden ...
+Beim empfangen empfängt UDP nur Packete von bestimmter Adresse und Port und gibt diese zum verarbeiten an AppLayer weiter.
+Application Layer Protocol: Bauen oder Zerlegen von Packeten und weiterleiten an unterliegende Schicht
+*/
+
 // Function to send an acknowledgment response to the sender
 void send_ack(int sock, struct sockaddr_storage *source_addr, uint8_t version_number)
 {
