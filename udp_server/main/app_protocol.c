@@ -17,17 +17,20 @@ void app_protocol_handle_message(struct sockaddr_storage *source_addr, uint8_t *
     header_t received_header;
     memcpy(&received_header, buffer, sizeof(header_t));
 
-    ESP_LOGI(TAG, "Received header: Version = %d, Message Type = %d, Flags = %d, Length = %d",
-             received_header.version_number, received_header.message_type, received_header.flags, received_header.length);
+    ESP_LOGI(TAG, "Received header: Version = %d, Message Type = %d, ACK-Flag = %d, Length = %d",
+             received_header.version_number, received_header.message_type, received_header.flags.bits.ack, received_header.length);
 
-    if (received_header.flags == ACK_FLAG && received_header.message_type != ACK)
+    // Respond with ACK if ACK flag is set (and message type is not ACK)
+    if (received_header.flags.bits.ack == 1 && received_header.message_type != ACK)
     {
         send_ack(source_addr, received_header.version_number);
     }
 
     if (packet_len < sizeof(header_t) + received_header.length)
     {
-        ESP_LOGE(TAG, "Received packet smaller than expected size");
+        ESP_LOGE(TAG, "Received packet smaller than expected size, expected: %d, got: %d", sizeof(header_t) + received_header.length, packet_len);
+        ESP_LOGE(TAG, "header: %d, header_payload_len: %d, bitfield_len: %d", sizeof(header_t), received_header.length, sizeof(flags_t));
+
         return;
     }
 
@@ -67,7 +70,12 @@ void handle_move_to_command(const uint8_t *payload)
 
 void send_ack(struct sockaddr_storage *source_addr, uint8_t version_number)
 {
-    header_t ack_header = {version_number, ACK, NACK_FLAG, 0};
+    header_t ack_header;
+    ack_header.version_number = version_number;
+    ack_header.message_type = ACK;
+    ack_header.flags.flagstorage = 0; // Clear all flags
+    ack_header.flags.bits.ack = 1;    // Set ACK flag
+    ack_header.length = 0;
     ESP_LOGI(TAG, "Got ACK flag, sending ACK response.");
     udp_send_packet((uint8_t *)&ack_header, sizeof(header_t), source_addr);
 }
