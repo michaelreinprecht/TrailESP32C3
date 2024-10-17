@@ -5,6 +5,30 @@
 #include <string.h>
 
 static const char *TAG = "app_protocol";
+static uint8_t last_received_sequence_number = 255; // Global variable to store last received sequence number
+static uint8_t sending_sequence_number = 0;         // Global variable to store the sequence number of the next packet to send
+static bool is_first_packet = true;
+
+bool is_sequence_number_valid(uint8_t sequence_number)
+{
+    if (is_first_packet)
+    {
+        is_first_packet = false;
+        return true;
+    }
+    // If the new sequence number is greater than the last one, it's valid
+    if (sequence_number > last_received_sequence_number)
+    {
+        return true;
+    }
+    // Special case for wraparound
+    if (last_received_sequence_number >= 245 && sequence_number <= 10)
+    {
+        return true; // Accept wraparound from >=245 to <=10..?
+    }
+    // Otherwise, ignore the packet
+    return false;
+}
 
 void app_protocol_handle_message(struct sockaddr_storage *source_addr, uint8_t *buffer, int packet_len)
 {
@@ -17,8 +41,8 @@ void app_protocol_handle_message(struct sockaddr_storage *source_addr, uint8_t *
     header_t received_header;
     memcpy(&received_header, buffer, sizeof(header_t));
 
-    ESP_LOGI(TAG, "Received header: Version = %d, Message Type = %d, ACK-Flag = %d, Length = %d",
-             received_header.version_number, received_header.message_type, received_header.flags.bits.ack, received_header.length);
+    ESP_LOGI(TAG, "Received header: Version = %d, Message Type = %d, ACK-Flag = %d, Sequence Number = %d, Length = %d",
+             received_header.version_number, received_header.message_type, received_header.flags.bits.ack, received_header.sequence_number, received_header.length);
 
     // Respond with ACK if ACK flag is set (and message type is not ACK)
     if (received_header.flags.bits.ack == 1 && received_header.message_type != ACK)
@@ -29,28 +53,35 @@ void app_protocol_handle_message(struct sockaddr_storage *source_addr, uint8_t *
     if (packet_len < sizeof(header_t) + received_header.length)
     {
         ESP_LOGE(TAG, "Received packet smaller than expected size, expected: %d, got: %d", sizeof(header_t) + received_header.length, packet_len);
-        ESP_LOGE(TAG, "header: %d, header_payload_len: %d, bitfield_len: %d", sizeof(header_t), received_header.length, sizeof(flags_t));
-
         return;
     }
 
-    switch (received_header.message_type)
+    if (is_sequence_number_valid(received_header.sequence_number))
     {
-    case ERR:
-        ESP_LOGI(TAG, "Recieved ERR message.");
-        break;
-    case ACK:
-        ESP_LOGI(TAG, "Recieved ACK message.");
-        break;
-    case CONTROL_COMMAND:
-        handle_control_command(buffer + sizeof(header_t));
-        break;
-    case MOVE_TO_COMMAND:
-        handle_move_to_command(buffer + sizeof(header_t));
-        break;
-    default:
-        ESP_LOGE(TAG, "Unknown message type received");
-        break;
+        last_received_sequence_number = received_header.sequence_number;
+
+        switch (received_header.message_type)
+        {
+        case ERR:
+            ESP_LOGI(TAG, "Recieved ERR message.");
+            break;
+        case ACK:
+            ESP_LOGI(TAG, "Recieved ACK message.");
+            break;
+        case CONTROL_COMMAND:
+            handle_control_command(buffer + sizeof(header_t));
+            break;
+        case MOVE_TO_COMMAND:
+            handle_move_to_command(buffer + sizeof(header_t));
+            break;
+        default:
+            ESP_LOGE(TAG, "Unknown message type received");
+            break;
+        }
+    }
+    else
+    {
+        ESP_LOGI(TAG, "Ignoring packet with sequence number %d, last received sequence number %d", received_header.sequence_number, last_received_sequence_number);
     }
 }
 
@@ -73,9 +104,10 @@ void send_ack(struct sockaddr_storage *source_addr, uint8_t version_number)
     header_t ack_header;
     ack_header.version_number = version_number;
     ack_header.message_type = ACK;
+    ack_header.sequence_number = sending_sequence_number++;
+    ack_header.length = 0;
     ack_header.flags.flagstorage = 0; // Clear all flags
     ack_header.flags.bits.ack = 1;    // Set ACK flag
-    ack_header.length = 0;
     ESP_LOGI(TAG, "Got ACK flag, sending ACK response.");
     udp_send_packet((uint8_t *)&ack_header, sizeof(header_t), source_addr);
 }

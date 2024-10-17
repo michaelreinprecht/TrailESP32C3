@@ -24,18 +24,18 @@ typedef union
 
 typedef struct __attribute__((packed))
 {
-    int8_t version_number; // 1 byte defining version number of the protocol
-    int8_t message_type;   // 1 byte defining message type (e.g. ERR=0, ACK=1, Control_Command=2, MoveTo_Command=3, ...)
-    //+ Sequenznummer
-    int8_t length; // 1 byte specifying the length of the payload in bytes
-    flags_t flags; // 1 byte for flags
+    uint8_t version_number;  // 1 byte defining version number of the protocol
+    uint8_t message_type;    // 1 byte defining message type (e.g. ERR=0, ACK=1, Control_Command=2, MoveTo_Command=3, ...)
+    uint8_t sequence_number; // 1 byte for sequence number
+    uint8_t length;          // 1 byte specifying the length of the payload in bytes
+    flags_t flags;           // 4 bytes for flags
 } header_t;
 
 typedef struct __attribute__((packed))
 {
-    int32_t speed;
-    int8_t direction;
-    int8_t stop;
+    uint32_t speed;
+    uint8_t direction;
+    uint8_t stop;
 } control_command_t;
 
 typedef struct __attribute__((packed))
