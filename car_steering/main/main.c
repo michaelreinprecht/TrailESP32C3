@@ -7,12 +7,12 @@
 #include "pwm_control.h"
 
 // Define GPIO pins for PWM and direction for two motors
-#define MOTOR1_PIN_ENA GPIO_NUM_3  // PWM Pin for speed control of motor 1
+#define MOTOR1_PIN_ENA GPIO_NUM_8  // PWM Pin for speed control of motor 1
 #define MOTOR1_PIN_IN1 GPIO_NUM_4  // Pin for IN1 (direction) of motor 1
 #define MOTOR1_PIN_IN2 GPIO_NUM_5  // Pin for IN2 (direction) of motor 1
 #define MOTOR2_PIN_ENA GPIO_NUM_9  // PWM Pin for speed control of motor 2
-#define MOTOR2_PIN_IN1 GPIO_NUM_8   // Pin for IN1 (direction) of motor 2
-#define MOTOR2_PIN_IN2 GPIO_NUM_10   // Pin for IN2 (direction) of motor 2
+#define MOTOR2_PIN_IN1 GPIO_NUM_6   // Pin for IN1 (direction) of motor 2
+#define MOTOR2_PIN_IN2 GPIO_NUM_7   // Pin for IN2 (direction) of motor 2
 
 #define PWM_FREQUENCY 5000              // 5 kHz PWM frequency
 #define PWM_RESOLUTION LEDC_TIMER_8_BIT // 8-bit resolution (0-255)
@@ -102,5 +102,6 @@ void app_main(void)
 
         esp_rom_delay_us(5000000);
         movement = (movement + 1) % 9; 
+        printf(movement);
     }  
 }
