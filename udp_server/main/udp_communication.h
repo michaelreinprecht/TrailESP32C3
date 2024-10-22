@@ -1,16 +1,14 @@
-// udp_communication.h
-
 #ifndef UDP_COMMUNICATION_H
 #define UDP_COMMUNICATION_H
 
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "esp_log.h"
+#include <stdint.h>
+#include <sys/socket.h>
+#include <lwip/netdb.h>
 
-// Port definition
-#define PORT 4444
-
-// Function to start the UDP server task
-void udp_echo_server_task(void *pvParameters);
+// Function prototypes
+int udp_init_socket(void);
+int udp_receive_packet(uint8_t *buffer, int buffer_size, struct sockaddr_storage *source_addr);
+int udp_send_packet(const uint8_t *data, int data_size, const struct sockaddr_storage *dest_addr);
+void udp_close_socket(void);
 
 #endif // UDP_COMMUNICATION_H
