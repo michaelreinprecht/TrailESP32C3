@@ -1,6 +1,8 @@
 #include "pwm_control.h"
-#include "driver/gpio.h"
+#include <stdio.h>
 #include "driver/ledc.h"
+#include "esp_err.h"
+#include "driver/gpio.h"
 
 // Function to initialize the PWM timer
 esp_err_t pwm_init_timer(ledc_timer_bit_t duty_resolution, uint32_t frequency, ledc_timer_t timer_num) {
@@ -16,12 +18,12 @@ esp_err_t pwm_init_timer(ledc_timer_bit_t duty_resolution, uint32_t frequency, l
 }
 
 // Function to initialize a PWM channel for a motor
-esp_err_t pwm_init_channel(int gpio_num, int channel, int duty) {
+esp_err_t pwm_init_channel(int gpio_num, int channel, ledc_timer_t timer_num, int duty) {
     ledc_channel_config_t ledc_channel = {
         .gpio_num = gpio_num,                 // PWM pin for the motor
         .speed_mode = LEDC_LOW_SPEED_MODE,    // Low-speed mode
         .channel = channel,                   // PWM channel
-        .timer_sel = LEDC_TIMER_0,            // Use timer 0
+        .timer_sel = timer_num,               // Use specified timer
         .duty = duty,                         // Initial duty cycle
         .hpoint = 0                           // Default hpoint
     };
