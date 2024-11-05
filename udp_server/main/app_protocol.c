@@ -21,10 +21,12 @@ bool is_sequence_number_valid(uint8_t sequence_number)
     {
         return true;
     }
+
+    uint8_t distance = sequence_number - last_received_sequence_number;
     // Special case for wraparound
-    if (last_received_sequence_number >= 245 && sequence_number <= 10)
+    if (distance < 127)
     {
-        return true; // Accept wraparound from >=245 to <=10..?
+        return true;
     }
     // Otherwise, ignore the packet
     return false;
@@ -63,10 +65,10 @@ void app_protocol_handle_message(struct sockaddr_storage *source_addr, uint8_t *
         switch (received_header.message_type)
         {
         case ERR:
-            ESP_LOGI(TAG, "Recieved ERR message.");
+            ESP_LOGI(TAG, "Received ERR message.");
             break;
         case ACK:
-            ESP_LOGI(TAG, "Recieved ACK message.");
+            ESP_LOGI(TAG, "Received ACK message.");
             break;
         case CONTROL_COMMAND:
             handle_control_command(buffer + sizeof(header_t));

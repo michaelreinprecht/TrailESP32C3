@@ -17,8 +17,8 @@ typedef union
     uint32_t flagstorage; // The full representation of flags
     struct
     {
-        unsigned int ack : 1;       // 1 bit for ACK flag
-        unsigned int reserved : 31; // Remaining bits reserved for future use
+        uint32_t ack : 1;       // 1 bit for ACK flag
+        uint32_t reserved : 31; // Remaining bits reserved for future use
     } bits;
 } flags_t;
 
@@ -28,7 +28,7 @@ typedef struct __attribute__((packed))
     uint8_t message_type;    // 1 byte defining message type (e.g. ERR=0, ACK=1, Control_Command=2, MoveTo_Command=3, ...)
     uint8_t sequence_number; // 1 byte for sequence number
     uint8_t length;          // 1 byte specifying the length of the payload in bytes
-    flags_t flags;           // 4 bytes for flags
+    flags_t flags;           // 1 byte for flags
 } header_t;
 
 typedef struct __attribute__((packed))
