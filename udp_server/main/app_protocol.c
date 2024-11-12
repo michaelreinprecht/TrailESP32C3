@@ -4,6 +4,8 @@
 #include "esp_log.h"
 #include <string.h>
 
+#include "motor_control.h"
+
 static const char *TAG = "app_protocol";
 static uint8_t last_received_sequence_number = 255; // Global variable to store last received sequence number
 static uint8_t sending_sequence_number = 0;         // Global variable to store the sequence number of the next packet to send
@@ -92,6 +94,51 @@ void handle_control_command(const uint8_t *payload)
     control_command_t cmd_buffer;
     memcpy(&cmd_buffer, payload, sizeof(control_command_t));
     ESP_LOGI(TAG, "Control Command: Direction = %c, Speed = %ld, Stop = %d", cmd_buffer.direction, cmd_buffer.speed, cmd_buffer.stop);
+    ESP_LOGI(TAG, "direction: %d", (uint8_t)0);
+    ESP_LOGI(TAG, "direction: %d", (uint8_t)1);
+
+    switch ((uint8_t)cmd_buffer.direction)
+    {
+    case '0':
+        drive_stop();
+        printf("Motors stopped\n");
+        break;
+    case '1':
+        drive_forward(255);
+        printf("Motors forward\n");
+        break;
+    case '2':
+        drive_forward_diagonally(230, 255);
+        printf("Motors forward right\n");
+        break;
+    case '3':
+        drive_right(255, 255);
+        printf("Motors right\n");
+        break;
+    case '4':
+        drive_backward_diagonally(230, 255);
+        printf("Motors backward right\n");
+        break;
+    case '5':
+        drive_backward(255);
+        printf("Motors backward\n");
+        break;
+    case '6':
+        drive_backward_diagonally(255, 230);
+        printf("Motors backward left\n");
+        break;
+    case '7':
+        drive_left(255, 255);
+        printf("Motors left\n");
+        break;
+    case '8':
+        drive_forward_diagonally(255, 230);
+        printf("Motors forward left\n");
+        break;
+    default:
+        ESP_LOGW(TAG, "Unknown direction for Movement Command: Direction = %c, Speed = %ld, Stop = %d", cmd_buffer.direction, cmd_buffer.speed, cmd_buffer.stop);
+        break;
+    }
 }
 
 void handle_move_to_command(const uint8_t *payload)
