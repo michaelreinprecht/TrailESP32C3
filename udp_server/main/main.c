@@ -41,6 +41,8 @@
 
 void init_car_steering()
 {
+    vTaskDelay(pdMS_TO_TICKS(5000)); // Delay for 5000 ms
+
     // Define Pins
     motor_init(MOTOR1_PIN_IN1, MOTOR1_PIN_IN2, MOTOR2_PIN_IN1, MOTOR2_PIN_IN2);
     // Setting all pins to Output
